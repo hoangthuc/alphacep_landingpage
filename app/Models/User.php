@@ -7,13 +7,26 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use TCG\Voyager\Models\Role;
-use App\Models\Profile;
 
-class User extends \TCG\Voyager\Models\User
+class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
+    protected $table = 'm_user';
+    protected $guarded = ['user_id'];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->customer_id = auth()->user()->customer_id;
+            $model->created_by_id = auth()->id();
+        });
+        static::updating(function ($model) {
+            $model->updated_by_id =  auth()->id();
+            $model->updated_count += 1;
+        });
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -23,34 +36,6 @@ class User extends \TCG\Voyager\Models\User
         'name',
         'email',
         'password',
-        'profile_id',
-        'user_type',
-        'firstname',
-        'lastname',
-        'employee_number',
-        'job_title',
-        'primary_responsibility',
-        'supervisor',
-        'assigned_shop',
-        'associated_shops',
-        'home_phone',
-        'cell_phone',
-        'preferred_method_of_contact',
-        'landing_page',
-        'department',
-        'labor_item',
-        'authorization_limit',
-        'technician_pay_type',
-        'technician_pay_rate',
-        'technician_certificate_id',
-        'employee_signature',
-        'street_address',
-        'street_address_2',
-        'city',
-        'country',
-        'state',
-        'postal_code',
-        'roles'
     ];
 
     /**
@@ -70,15 +55,6 @@ class User extends \TCG\Voyager\Models\User
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed',
     ];
-
-    public function roles()
-    {
-        return $this->belongsTo(Role::class,'role_id');
-    }
-
-    public function profile()
-    {
-        return $this->belongsTo(Profile::class,'profile_id');
-    }
 }
